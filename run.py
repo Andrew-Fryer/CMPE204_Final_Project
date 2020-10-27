@@ -38,29 +38,29 @@ def example_theory():
     E = Encoding()
     
     # Mutually exclusive
-    E.add_constraint((h11 >> ~h21))
-    E.add_constraint(h21 >> ~h11)
-    E.add_constraint(h12 >> ~h22)
-    E.add_constraint(h22 >> ~h12)
+    E.add_constraint(~h11 | ~h21)
+    E.add_constraint(~h21 | ~h11)
+    E.add_constraint(~h12 | ~h22)
+    E.add_constraint(~h22 | ~h12)
 
     # holding implies not waiting
-    E.add_constraint(h11 >> ~w11)
-    E.add_constraint(h12 >> ~w12)
-    E.add_constraint(h21 >> ~w21)
-    E.add_constraint(h22 >> ~w22)
+    E.add_constraint(~h11 | ~w11)
+    E.add_constraint(~h12 | ~w12)
+    E.add_constraint(~h21 | ~w21)
+    E.add_constraint(~h22 | ~w22)
 
     # waiting implies not holding
-    E.add_constraint(w11 >> ~h11)
-    E.add_constraint(w12 >> ~h12)
-    E.add_constraint(w21 >> ~h21)
-    E.add_constraint(w22 >> ~h22)
+    E.add_constraint(~w11 | ~h11)
+    E.add_constraint(~w12 | ~h12)
+    E.add_constraint(~w21 | ~h21)
+    E.add_constraint(~w22 | ~h22)
 
-    
-    E.add_constraint(p1 >> ~(m11&h21)&~(m12&h22))
-    E.add_constraint(~(m11&h21)&~(m12&h22) >> p1)
-
-    E.add_constraint(p2 >> ~(m21&h11)&~(m22&h12))
-    E.add_constraint(~(m21&h11)&~(m22&h12) >> p2)
+    # p1 means process 1 can run without having to wait
+    E.add_constraint(~p1 | (~m11|~h21)&(~m12|~h22))
+    E.add_constraint((m11&h21)|(m12&h22) | p1)
+    # p2 means process 2 can run without having to wait
+    E.add_constraint(~p2 | (~m21|~h11)&(~m22|~h12))
+    E.add_constraint((m21&h11)|(m22&h12) | p2)
 
     return E
 
