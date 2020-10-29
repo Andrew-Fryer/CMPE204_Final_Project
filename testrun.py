@@ -87,19 +87,19 @@ def example_theory():
     E.add_constraint(~p34 | ~p43)
 
     #and implication constraints for the resources
-    E.add_constraint( f.negate(a11 & a21) | (q12 | q21) )
-    E.add_constraint( f.negate(a11 & b11) | (q13 | q31) )
-    E.add_constraint( f.negate(a11 & b21) | (q14 | q41) )
-    E.add_constraint( f.negate(a21 & b11) | (q23 | q32) )
-    E.add_constraint( f.negate(a21 & b21) | (q24 | q42) )
-    E.add_constraint( f.negate(b11 & b21) | (q34 | q43) )
+    E.add_constraint( (~a11 | ~a21) | (q12 | q21) )
+    E.add_constraint( (~a11 | ~b11) | (q13 | q31) )
+    E.add_constraint( (~a11 | ~b21) | (q14 | q41) )
+    E.add_constraint( (~a21 | ~b11) | (q23 | q32) )
+    E.add_constraint( (~a21 | ~b21) | (q24 | q42) )
+    E.add_constraint( (~b11 | ~b21) | (q34 | q43) )
 
-    E.add_constraint( f.negate(a12  & a22) | (p12 | p21) )
-    E.add_constraint( f.negate(a12  & b12) | (p13 | p31) )
-    E.add_constraint( f.negate(a12  & b22) | (p14 | p41) )
-    E.add_constraint( f.negate(a22  & b12) | (p23 | p32) )
-    E.add_constraint( f.negate(a22  & b22) | (p24 | p42) )
-    E.add_constraint( f.negate(b12  & b22) | (p34 | p43) )
+    E.add_constraint( (~a12  | ~a22) | (p12 | p21) )
+    E.add_constraint( (~a12  | ~b12) | (p13 | p31) )
+    E.add_constraint( (~a12  | ~b22) | (p14 | p41) )
+    E.add_constraint( (~a22  | ~b12) | (p23 | p32) )
+    E.add_constraint( (~a22  | ~b22) | (p24 | p42) )
+    E.add_constraint( (~b12  | ~b22) | (p34 | p43) )
 
 
     return E
@@ -114,6 +114,6 @@ if __name__ == "__main__":
     print("   Solution: %s" % T.solve())
 
     print("\nVariable likelihoods:")
-    for v,vn in zip([a,b,c,x,y,z], 'abcxyz'):
-        print(" %s: %.2f" % (vn, T.likelihood(v)))
-    print()
+    # for v,vn in zip([a,b,c,x,y,z], 'abcxyz'):
+    #     print(" %s: %.2f" % (vn, T.likelihood(v)))
+    # print()
