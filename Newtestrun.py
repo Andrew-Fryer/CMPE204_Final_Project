@@ -125,25 +125,25 @@ b22 = Var('b22') #true if p2_crit_sect2 uses r2
     # current propositions in half. So instead we have the following, using the same notation:
     # (1) a11, (2) a21, (3) b11, (4) b21
 
-    q12 = Var('q12') #true if a11 and a21 need to be scheduled
-    q13 = Var('q13') #true if a11 and b11 need to be scheduled
-    q14 = Var('q14') #true if a11 and b21 need to be scheduled
-    q23 = Var('q23') #true if a21 and b11 need to be scheduled
-    q24 = Var('q24') #true if a21 and b21 need to be scheduled
-    q34 = Var('q34') #true if b11 and b21 need to be scheduled
+q12 = Var('q12') #true if a11 and a21 need tscheduled
+q13 = Var('q13') #true if a11 and b11 need to be scheduled
+q14 = Var('q14') #true if a11 and b21 need to be scheduled
+q23 = Var('q23') #true if a21 and b11 need to be scheduled
+q24 = Var('q24') #true if a21 and b21 need to be scheduled
+q34 = Var('q34') #true if b11 and b21 need to be scheduled
 
     # This will generate a new version of constraints
 
 # ------------------------------RESOURCE 2 SCHEDULING PROPOSTIONS------------------------------------------
-Applying the same change from resource 1. Now p represents resource 2 and the subscripts references are
-(1) a12, (2) a22, (3) b12, (4) b22
+# Applying the same change from resource 1. Now p represents resource 2 and the subscripts references are
+# (1) a12, (2) a22, (3) b12, (4) b22
 
-    p12 = Var('p12') #true if a12 and a22 need to be scheduled
-    p13 = Var('p13') #true if a12 and b12 need to be scheduled
-    p14 = Var('p14') #true if a12 and b22 need to be scheduled
-    p23 = Var('p23') #true if a22 and b12 need to be scheduled
-    p24 = Var('p24') #true if a22 and b22 need to be scheduled
-    p34 = Var('p34') #true if b12 and b22 need to be scheduled
+p12 = Var('p12') #true if a12 and a22 need to be scheduled
+p13 = Var('p13') #true if a12 and b12 need to be scheduled
+p14 = Var('p14') #true if a12 and b22 need to be scheduled
+p23 = Var('p23') #true if a22 and b12 need to be scheduled
+p24 = Var('p24') #true if a22 and b22 need to be scheduled
+p34 = Var('p34') #true if b12 and b22 need to be scheduled
 
 #----------------------------------------CONSTRAINTS-----------------------------------------------------
 # Build an example full theory for your setting and return it.
@@ -155,27 +155,53 @@ def example_theory():
     E = Encoding()
     
     #if two critical sections make use of the same constraints then they need to be scheduled
+
     E.add_constraint( (~a11 | ~a21) | q12 ) #(a11 & a21) >> q12
-                                            #if p1_crit_sect1 uses r1 (a11) and p1_crit_sect2 uses r1 (a21)
-                                            #then they must be scheduled (q12)
+        #if p1_crit_sect1 uses r1 (a11) and p1_crit_sect2 uses r1 (a21)
+        #then they must be scheduled (q12)
+        #however, this leaves room for uncertainty if both a11 and a21 are false due to laws of implication
+        #that is, if a11 and a21 are false then q12 could be true, which is against our model, therefore have to add
+        #another implication constraint the other way around, essentially a biimplications
+        #(a11 &* a21) <> q12
+    E.add_constraint( ~q12 | (a11 & a21) ) #q12 >> (a11 & a21) 
 
     E.add_constraint( (~a11 | ~b11) | q13 ) #(a11 & b11) >> q13
+    E.add_constraint(  ~q13 | (a11 & b11) ) #q13 >> (a11 & b11)
+
     E.add_constraint( (~a11 | ~b21) | q14 ) #(a11 & b21) >> q14
+    E.add_constraint(  ~q14 | (a11 & b21) ) #q14 >> (a11 & b21)
+
     E.add_constraint( (~a21 | ~b11) | q23 ) #(a21 & b11) >> q23
+    E.add_constraint(  ~q23 | (a21 & b11) ) #q23 >> (a21 & b11)
+
     E.add_constraint( (~a21 | ~b21) | q24 ) #(a21 & b21) >> q24
+    E.add_constraint(  ~q24 | (a21 & b21) ) #q24 >> (a21 & b21)
+
     E.add_constraint( (~b11 | ~b21) | q34 ) #(b11 & b21) >> q34
+    E.add_constraint(  ~q34 | (b11 & b21) ) #q34 >> (b11 & b21)
+
+    #-------------------------RESOURCE 2 CONSTRAINTS------------------------------
 
     E.add_constraint( (~a12 | ~a22) | p12 ) #(a12 & a22) >> p12
-                                            #if p1_crit_sect1 uses r2 (a12) and p1_crit_sect2 uses r2 (a22)
-                                            #then they must be scheduled (p12)
+        #if p1_crit_sect1 uses r2 (a12) and p1_crit_sect2 uses r2 (a22)
+        #then they must be scheduled (p12)
+    E.add_constraint( ~p12 | (a12 & a22) ) #p12 >> (a12 & a22) 
 
     E.add_constraint( (~a12 | ~b12) | p13 ) #(a12 & b12) >> p13
+    E.add_constraint(  ~p13 | (a12 & b12) ) #p13 >> (a12 & b12)
+
     E.add_constraint( (~a12 | ~b22) | p14 ) #(a12 & b22) >> p14
+    E.add_constraint(  ~p14 | (a12 & b22) ) #p14 >> (a12 & b22)
+
     E.add_constraint( (~a22 | ~b12) | p23 ) #(a22 & b12) >> p23
+    E.add_constraint(  ~p23 | (a22 & b12) ) #p23 >> (a22 & b12)
+
     E.add_constraint( (~a22 | ~b22) | p24 ) #(a22 & b22) >> p24
+    E.add_constraint(  ~p24 | (a22 & b22) ) #p24 >> (a22 & b22)
+
     E.add_constraint( (~b12 | ~b22) | p34 ) #(b12 & b22) >> p34
-
-
+    E.add_constraint( ~p34  | (b12 & b22) ) #p34 >> (b12 & b22)
+    
 
     return E
 
@@ -185,7 +211,7 @@ if __name__ == "__main__":
     T = example_theory()
 
     print("\nSatisfiable: %s" % T.is_satisfiable())
-    print("# Solutions: %d" % T.count_solutions())
+    #print("# Solutions: %d" % T.count_solutions())
     print("   Solution: %s" % T.solve())
 
     print("\nVariable likelihoods:")
