@@ -1,0 +1,78 @@
+---------------------------------GOAL---------------------------------------------------------
+The goal here was to use propositional logic and deduction to figure out how to schedule two processes with their critical
+sections, onto a CPU with 2 cores.
+So essentially, there are two mini processors that can run in parallel.
+The problem contains the following:
+process 1:
+	has 2 critical sections: p1_crit_sect1 and p1_crit_sect2
+process 2:
+	has 2 critical sections: p2_crit_sect1 and p2_crit_sect2
+
+Also have two shared resources: r1 and r2
+A critcal section can make use of only one shared resource.
+Critical sections that make use of the same shared resource will have to be scheduled (ie cannot run in parallel)
+
+The deduction will use propositions to determine which critical sections need to be scheduled 
+
+
+
+
+
+
+Sample Solution:
+This was the solution obtained from our sample run (using testrun.py):
+
+{'q23': False, 'p34': False, 'a21': False, 'p14': False, 'q43': True, 'q14': False, 'a12': False, 'b21': True, 'b11': False, 'a11': False, 'q42': False, 'p31': True, 'p42': False, 'p23': False, 'q41': True, 'p12': True, 'p24': True, 'p21': False, 'q13': True, 'q21': True, 'b12': True, 'p41': True, 'a22': False, 'b22': False, 'q34': False, 'q31': False, 'q24': True, 'p13': False, 'p32': True, 'q12': False, 'q32': True, 'p43': True}
+
+Breaking that down we get the following:
+
+a11 - false
+a12 - false
+a21 - false
+a22 - false
+
+b11 - false
+b12 - true
+b21 - true
+b22 - false
+
+#scheduling propositions for resource 1
+#dealing with (1)a11 (2)a21 (3)b11 (4)b21
+q13 - true
+q12 - false
+q14 - false
+q21 - true
+q23 - false
+q24 - true
+q31 - false
+q32  - true
+q34 - false
+q41 - true
+q42 - false
+q43 - true
+
+#scheduling propositions for resource 2
+#dealing with (1)a12 (2)a22 (3)b12 (4)b22
+
+
+p12 - true - a12 should be scheduled before a22 
+/*
+should not be the case because a12 and a22 are false
+meaning that process 1 crit sect 1 does NOT make use of resource 2
+and process 1 crit sect 2 does NOT make use of resource 2
+so there should be no scheduling between them, which means that
+both p12 and p21 should be false. However, because of the implication constraint and the other constraint (p21 -> !p12) we have this 
+*/
+
+p13 - false
+p14 - false
+p21 - false
+p23 - false
+p24 - true
+p31 - true
+p32 - true
+p34 - false
+p41 - true
+p42 - false 
+p43 - true - b22 before b12
+
