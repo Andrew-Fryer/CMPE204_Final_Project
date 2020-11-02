@@ -46,60 +46,66 @@ def example_theory():
       for j in range(num_resources):
         E.add_constraint(~h[i][j] | ~w[i][j])
     
-    # hij -> mij and wij -> mij
-
-    # define xij in terms of hij and mij
-#    for i in range(num_processes):
-#      for j in range(num_resources):
-#        print('todo')
-
     # circular wait creates an unsafe state
-
-    for i in range(num_processes):
-      process_is_safe = T
-      for j in range(num_resources):
-        resoure_is_allocated = F
-#        for k in range(num_processes):
-#          resource_is_allocated = resource_is_allocated | h[k][j]
-#        process_may_be_stopped_by_resource = m[i][j] & (resource_is_allocated & ~h[i][j])
-        # Wrap this in a function for deeper cycles
-        for k in range(num_processes):
-          for l in range(num_resources):
-            # this only does cycles of length 2...
-            process_is_safe = process_is_safe & m[i][j] & h[k][j] & w[k][l] & h[i][l]
-      # s[i] = process_is_safe
-      E.add_constraint(~s[i] | process_is_safe)
-      #E.add_constraint(~process_is_safe | s[i])
-      print('process', i, 'is safe:', process_is_safe)
-
+    for c in generate_circular_wait_constraints():
+      E.add_constraint(c)
+      print(c)
 
     return E
 
-def asdf(list_of_constraints):
-  res = []
-  for i in range(num_processes):
-    for j in range(num_resources):
-      res += map(lambda c : c & h & w, list_of_constraints)
-  return res
-
 # this generates a list of cycles
 # where a cycle is a list of processes
-def generate_cycles(length):
-  if length == 1:
-    return [[p] for p in range(num_processes)]
-  res = []
-  for c in generate_cycles(length - 1):
-    for i in range(num_processes):
-      res.append(c + [i])
+# todo: don't allow duplicates
+def generate_cycle_list_up_to_length(length):
+  cycle_list_to_one_less = [[p] for p in range(num_processes)]
+  res = [] # note that cycle lists of length 1 are excluded
+  for n in range(length):
+    cycle_list = []
+    for c in cycle_list_to_one_less:
+      for i in range(num_processes):
+        cycle_list.append(c + [i])
+    cycle_list_to_one_less = cycle_list
+    res += cycle_list
   return res
+#print('cycles 4:', generate_cycle_list_up_to_length(4))
 
-print('cycles 4:', generate_cycles(4))
+# todo: don't allow duplicates
+def generate_lists_of_resources(length):
+  if length == 1:
+    return [[r] for r in range(num_resources)]
+  prev_list = generate_lists_of_resources(length - 1)
+  res = []
+  for l in prev_list:
+    for r in range(num_resources):
+      res.append(l + [r])
+  return res
+#print('lists of 4 resources', generate_lists_of_resources(4))
 
-def cycle_to_constraint():
-  constraint = T
-  for p in l:
-    constraint = constraint 
+class Cycle:
+  def __init__(self, list_of_processes, list_of_resources):
+    assert len(list_of_processes) == len(list_of_resources) + 1
+    self.processes = list_of_processes
+    self.resources = list_of_resources
 
+  def toConstraint(self):
+    constraint = h[self.processes[0]][self.resources[0]]
+    for i in range(1, len(self.processes)):
+      prev_proc = self.processes[i-1]
+      proc = self.processes[i]
+      res = self.resources[i-1]
+      constraint = constraint & w[prev_proc][res] & h[proc][res]
+    return constraint
+
+def cycle_list_to_constraints(cycle_list):
+  assert len(cycle_list) > 1
+  return [Cycle(cycle_list, resource_list).toConstraint() for resource_list in generate_lists_of_resources(len(cycle_list) - 1)] # todo make more efficient
+#print('constraint for [0, 1, 0]', cycle_list_to_constraints([0, 1, 0]))
+
+def generate_circular_wait_constraints():
+  constraints = []
+  for cycle_list in generate_cycle_list_up_to_length(num_processes):
+    constraints += cycle_list_to_constraints(cycle_list)
+  return constraints
 
 if __name__ == "__main__":
 
