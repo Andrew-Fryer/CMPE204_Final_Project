@@ -2,51 +2,70 @@
 from nnf import Var
 from lib204 import Encoding
 
-#2 processes each with 2 segments, 2 resources
-#each segment can make use of only one resource
-#goal is to use propositional values to determine a schedule
-#for processes on two CPU cores
+# ---------------------------------GOAL---------------------------------------------------------
+# The goal here was to use propositional logic and deduction to figure out how to schedule two processes with their critical
+# sections, onto a CPU with 2 cores.
+# So essentially, there are two mini processors that can run in parallel.
+# The problem contains the following:
+# process 1:
+#     has 2 critical sections: p1_crit_sect1 and p1_crit_sect2
+# process 2:
+#     has 2 critical sections: p2_crit_sect1 and p2_crit_sect2
 
-#a refers to code segments for process 1
-#first number subscript indicates with segment it is (1 -first segment, 2 - second segment)
-#second number subscript indicates what resource is being used
+# Also have two shared resources: r1 and r2
+# A critcal section can make use of only one shared resource.
+# Critical sections that make use of the same shared resource will have to be scheduled (ie cannot run in parallel)
 
-a11 = Var('a11') #true if proc 1 crit sect 1 uses resource 1
-a12 = Var('a12') #true if proc 1 crit sect 1 uses resource 2
-a21 = Var('a21') #true if proc 1 crit sect 2 uses resource 1
-a22 = Var('a22') #true if proc 1 crit sect 2 uses resource 2
+# The deduction will use propositions to determine which critical sections need to be scheduled and which sections can 
+# run in parallel. This will generate the following proposition
 
-#same thing for process 2 code segments, this time with b rather
-#than a
+# -----------------------------------------PROCESS 1 SEGMENT PROPOSITIONS ----------------------------------------
+# For process 1 segment propositions, we will use the letter a
+# p1_crit_sect1 is denoted by a1 and p1_crit_sect2 is denoted by a2,
+# these proposition address the different possibilities for resource use by the critical sections
 
-b11 = Var('b11')
-b12 = Var('b12')
-b21 = Var('b21')
-b22 = Var('b22')
+a11 = Var('a11') #true if p1_crit_sect1 uses r1
+a12 = Var('a12') #true if p1_crit_sect1 uses r2
+a21 = Var('a21') #true if p1_crit_sect2 uses r1
+a22 = Var('a22') #true if p1_crit_sect2 uses r2
 
-#scheduling propositions, truth values used to determine possible
-#scheduling
-#let q refer to scheduling props for resource 1
-#let p refer to scheduling props for resource 2
+# -----------------------------------------PROCESS 2 SEGMENT PROPOSITIONS ----------------------------------------
+# For process 2 segment propositions, we will use the letter b
+# p2_crit_sect1 is denoted by b1 and p2_crit_sect2 is denoted by b2,
+# these proposition address the different possibilities for resource use by the critical sections
 
-#subscript refers to code segment, for q:
-# 1: a11, 2: a21, 3: b11, 4: b21
+b11 = Var('b11') #true if p2_crit_sect1 uses r1
+b12 = Var('b12') #true if p2_crit_sect1 uses r2
+b21 = Var('b21') #true if p2_crit_sect2 uses r1
+b22 = Var('b22') #true if p2_crit_sect2 uses r2
 
-q12 = Var('q12') #true if a11 is scheduled before a21
-q13 = Var('q13') #true if a11 is scheduled before b11
-q14 = Var('q14') #true if a11 is scheduled before b21
-q21 = Var('q21') #true if a21 is scheduled before a11
-q23 = Var('q23')
-q24 = Var('q24')
-q31 = Var('q31')
-q32 = Var('q32')
-q34 = Var('q34')
-q41 = Var('q41')
-q42 = Var('q42')
-q43 = Var('q43')
+# ------------------------------RESOURCE 1 SCHEDULING PROPOSTIONS------------------------------------------
 
-#similar thing for resource 2 where we use p and:
-## 1: a12, 2: a22, 3: b12, 4: b22
+
+# So originally we had the following:
+#     q was used to represent resource scheduling for resource 1, and the number subscripts are for:
+#     (1) a11, (2) a21, (3) b11, (4) b21
+
+#     Since all the above propositions stand for critical sections that make use of the same resource,
+#     r1 then we would have to schedule them if they are true
+#     therefore the different ways/possibilities of scheduling
+
+    q12 = Var('q12') #true if a11 is scheduled before a21,
+    q13 = Var('q13') #true if a11 is scheduled before b11
+    q14 = Var('q14') #true if a11 is scheduled before b21
+    q21 = Var('q21') #true if a12 is scheduled before a11
+    q23 = Var('q23') #true if a12 is scheduled before b11
+    q24 = Var('q24') #true if a12 is scheduled before b21
+    q31 = Var('q31') #true if b11 is scheduled before a11
+    q32 = Var('q32') #true if b11 is scheduled before a21
+    q34 = Var('q34') #true if b11 is scheduled before b21 
+    q41 = Var('q41') #true if b21 is scheduled before a11
+    q42 = Var('q42') #true if b21 is scheduled before a21
+    q43 = Var('q43') #true if b21 is scheduled before b11
+
+# ------------------------------RESOURCE 2 SCHEDULING PROPOSTIONS------------------------------------------
+#similar thing for resource 1, now r2 is represented by p
+# (1) a12, (2) a22, (3) b12, (4) b22
 p12 = Var('p12')
 p13 = Var('p13')
 p14 = Var('p14')
