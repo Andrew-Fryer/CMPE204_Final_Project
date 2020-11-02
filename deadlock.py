@@ -47,9 +47,12 @@ def example_theory():
         E.add_constraint(~h[i][j] | ~w[i][j])
     
     # circular wait creates an unsafe state
-    for c in generate_circular_wait_constraints():
-      E.add_constraint(c)
-      print(c)
+    cwc = generate_circular_wait_constraints()
+    for i in range(num_processes):
+      for j in range(num_resources):
+        for c in cwc: # todo: if j is the first resource
+          E.add_constraint(~h[i][j] & m[i][j] & c)
+          print(c)
 
     return E
 
