@@ -47,12 +47,9 @@ def example_theory():
         E.add_constraint(~h[i][j] | ~w[i][j])
     
     # circular wait creates an unsafe state
-    cwc = generate_circular_wait_constraints()
-    for i in range(num_processes):
-      for j in range(num_resources):
-        for c in cwc: # todo: if j is the first resource
-          E.add_constraint(~h[i][j] & m[i][j] & c)
-          print(c)
+    for c in generate_circular_wait_constraints():
+      E.add_constraint(c)
+      print(c)
 
     return E
 
@@ -73,10 +70,10 @@ def generate_cycle_list_up_to_length(length):
 #print('cycles 4:', generate_cycle_list_up_to_length(4))
 
 # todo: don't allow duplicates
-def generate_lists_of_resources(length):
+def generate_lists_of_resources(length, j):
   if length == 1:
-    return [[r] for r in range(num_resources)]
-  prev_list = generate_lists_of_resources(length - 1)
+    return [[j]]
+  prev_list = generate_lists_of_resources(length - 1, j)
   res = []
   for l in prev_list:
     for r in range(num_resources):
@@ -99,15 +96,22 @@ class Cycle:
       constraint = constraint & w[prev_proc][res] & h[proc][res]
     return constraint
 
-def cycle_list_to_constraints(cycle_list):
+def cycle_list_to_constraints(cycle_list, j):
   assert len(cycle_list) > 1
-  return [Cycle(cycle_list, resource_list).toConstraint() for resource_list in generate_lists_of_resources(len(cycle_list) - 1)] # todo make more efficient
+  return [Cycle(cycle_list, resource_list).toConstraint() for resource_list in generate_lists_of_resources(len(cycle_list) - 1, j)] # todo make more efficient
 #print('constraint for [0, 1, 0]', cycle_list_to_constraints([0, 1, 0]))
 
 def generate_circular_wait_constraints():
   constraints = []
+  for i in range(num_processes):
+    for j in range(num_resources):
+      for c in h(j):
+        constraints.append(~h[i][j] & m[i][j] & c)
+
+def h(j):
+  constraints = []
   for cycle_list in generate_cycle_list_up_to_length(num_processes):
-    constraints += cycle_list_to_constraints(cycle_list)
+    constraints += cycle_list_to_constraints(cycle_list, j)
   return constraints
 
 if __name__ == "__main__":
