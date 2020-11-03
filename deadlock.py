@@ -5,7 +5,7 @@ num_processes = 2
 num_resources = 2
 
 def create_table_of_vars(prefix_char):
-  return [[Var(prefix_char + str(i) + str(j)) for i in range(num_processes)] for j in range(num_resources)]
+  return [[Var(prefix_char + str(i) + str(j)) for j in range(num_resources)] for i in range(num_processes)]
 
 # Process has resource
 h = create_table_of_vars('h')
