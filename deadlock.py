@@ -55,6 +55,6 @@ if __name__ == "__main__":
     print("   Solution: %s" % T.solve())
 
     print("\nVariable likelihoods:")
-    for v,vn in zip([a,b,c,x,y,z], 'abcxyz'):
-        print(" %s: %.2f" % (vn, T.likelihood(v)))
+    print(" %s: %.2f" % ("each m", T.likelihood(m[0][0]))) # by symmetry
+    print(" %s: %.2f" % ("each h", T.likelihood(h[0][0]))) # by symmetry
     print()
