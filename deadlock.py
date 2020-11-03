@@ -11,9 +11,6 @@ def create_table_of_vars(prefix_char):
 h = create_table_of_vars('h')
 #print(h)
 
-# Process is waiting for resource
-w = create_table_of_vars('w')
-
 # Process may ask for resource (in maximum)
 m = create_table_of_vars('m')
 
@@ -37,21 +34,11 @@ def example_theory():
 
     for i in range(num_processes):
       for j in range(num_resources):
-        # holding and waiting are mutually exclusive
-        constraint = ~h[i][j] | ~w[i][j]
-        print('holding and waiting are mutually exclusive', constraint)
-        E.add_constraint(constraint)
-
         # holding implies max
         constraint = ~h[i][j] | m[i][j]
         print('holding implies max', constraint)
         E.add_constraint(constraint)
 
-        # waiting implies max
-        constraint = ~w[i][j] | m[i][j]
-        print('waiting implies max', constraint)
-        E.add_constraint(constraint)
-    
       # hard code 2 processes and 2 resources for now:
       # These constraints ensure that the system is in a safe state
       E.add_constraint(~m[0][0] | ~h[1][0] | ~m[1][1] | ~h[0][1])
