@@ -62,27 +62,27 @@ def example_theory():
         E.add_constraint(constraint)
     
     # circular wait creates an unsafe state
-    for c in generate_circular_wait_constraints():
-      E.add_constraint(c)
-      print('circular', c)
+#    for c in generate_circular_wait_constraints():
+#      E.add_constraint(c)
+#      print('circular', c)
 
     return E
 
 # this generates a list of cycles
 # where a cycle is a list of processes
 # todo: don't allow duplicates
-def generate_cycle_list_up_to_length(length):
-  cycle_list_to_one_less = [[p] for p in range(num_processes)]
+def generate_cycle_list_up_to_length(length, starting_process):
+  cycle_list_to_one_less = [[p] for p in range(num_processes) if p is not starting_process]
   res = [] # note that cycle lists of length 1 are excluded
   for n in range(length):
     cycle_list = []
     for c in cycle_list_to_one_less:
-      for i in (x for x in range(num_processes) if x not in c):
+      for i in (x for x in range(num_processes) if x not in c and x is not starting_process):
         cycle_list.append(c + [i])
     cycle_list_to_one_less = cycle_list
     res += cycle_list
   return res
-#print('cycles 2:', generate_cycle_list_up_to_length(2))
+print('cycles 2 starting with 0:', generate_cycle_list_up_to_length(2, 0))
 
 # todo: don't allow duplicates
 def generate_lists_of_resources(length, j):
@@ -120,13 +120,13 @@ def generate_circular_wait_constraints():
   constraints = []
   for i in range(num_processes):
     for j in range(num_resources):
-      for c in helper(j):
+      for c in helper(i, j):
         constraints.append(~h[i][j] & m[i][j] & c)
   return constraints
 
-def helper(j):
+def helper(i, j):
   constraints = []
-  for cycle_list in generate_cycle_list_up_to_length(num_processes):
+  for cycle_list in generate_cycle_list_up_to_length(num_processes, i):
     constraints += cycle_list_to_constraints(cycle_list, j)
   return constraints
 
