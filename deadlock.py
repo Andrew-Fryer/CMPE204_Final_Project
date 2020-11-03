@@ -24,6 +24,8 @@ m = create_table_of_vars('m')
 s = [Var('s' + str(i)) for i in range(num_processes)]
 #print(s)
 
+#after looking at s, don't pick a process that is waiting for anythin...
+
 # These are just for convienence below
 T = Var('T')
 F = Var('F')
@@ -42,11 +44,21 @@ def example_theory():
       print('holding is exclusive', constraint)
       E.add_constraint(constraint)
 
-    # holding and waiting are mutually exclusive
     for i in range(num_processes):
       for j in range(num_resources):
+        # holding and waiting are mutually exclusive
         constraint = ~h[i][j] | ~w[i][j]
         print('holding and waiting are mutually exclusive', constraint)
+        E.add_constraint(constraint)
+
+        # holding implies max
+        constraint = ~h[i][j] | m[i][j]
+        print('holding implies max', constraint)
+        E.add_constraint(constraint)
+
+        # waiting implies max
+        constraint = ~w[i][j] | m[i][j]
+        print('waiting implies max', constraint)
         E.add_constraint(constraint)
     
     # circular wait creates an unsafe state
@@ -65,7 +77,7 @@ def generate_cycle_list_up_to_length(length):
   for n in range(length):
     cycle_list = []
     for c in cycle_list_to_one_less:
-      for i in range(num_processes):
+      for i in (x for x in range(num_processes) if x not in c):
         cycle_list.append(c + [i])
     cycle_list_to_one_less = cycle_list
     res += cycle_list
