@@ -9,7 +9,7 @@ def create_table_of_vars(prefix_char):
 
 # Process has resource
 h = create_table_of_vars('h')
-print(h)
+#print(h)
 
 # Process is waiting for resource
 w = create_table_of_vars('w')
@@ -22,8 +22,9 @@ m = create_table_of_vars('m')
 
 # If the system is safe now, then it is safe to run process
 s = [Var('s' + str(i)) for i in range(num_processes)]
-print(s)
+#print(s)
 
+# These are just for convienence below
 T = Var('T')
 F = Var('F')
 
@@ -38,18 +39,20 @@ def example_theory():
       constraint = T
       for i in range(num_processes):
         constraint = constraint | ~h[i][j]
-      print(constraint)
+      print('holding is exclusive', constraint)
       E.add_constraint(constraint)
 
     # holding and waiting are mutually exclusive
     for i in range(num_processes):
       for j in range(num_resources):
-        E.add_constraint(~h[i][j] | ~w[i][j])
+        constraint = ~h[i][j] | ~w[i][j]
+        print('holding and waiting are mutually exclusive', constraint)
+        E.add_constraint(constraint)
     
     # circular wait creates an unsafe state
     for c in generate_circular_wait_constraints():
       E.add_constraint(c)
-      print(c)
+      print('circular', c)
 
     return E
 
