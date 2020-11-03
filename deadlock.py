@@ -105,10 +105,11 @@ def generate_circular_wait_constraints():
   constraints = []
   for i in range(num_processes):
     for j in range(num_resources):
-      for c in h(j):
+      for c in helper(j):
         constraints.append(~h[i][j] & m[i][j] & c)
+  return constraints
 
-def h(j):
+def helper(j):
   constraints = []
   for cycle_list in generate_cycle_list_up_to_length(num_processes):
     constraints += cycle_list_to_constraints(cycle_list, j)
