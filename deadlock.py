@@ -17,15 +17,6 @@ w = create_table_of_vars('w')
 # Process may ask for resource (in maximum)
 m = create_table_of_vars('m')
 
-# Process may be blocked, waiting for resource
-#x = create_table_of_vars('x')
-
-# If the system is safe now, then it is safe to run process
-s = [Var('s' + str(i)) for i in range(num_processes)]
-#print(s)
-
-#after looking at s, don't pick a process that is waiting for anythin...
-
 # These are just for convienence below
 T = Var('T')
 F = Var('F')
@@ -61,79 +52,12 @@ def example_theory():
         print('waiting implies max', constraint)
         E.add_constraint(constraint)
     
-    # circular wait creates an unsafe state
-#    for c in generate_circular_wait_constraints():
-#      E.add_constraint(c)
-#      print('circular', c)
-
       # hard code 2 processes and 2 resources for now:
-      E.add_constraint(m[0][0] & h[1][0] & m[1][1] & h[0][1])
-      E.add_constraint(m[0][1] & h[1][1] & m[1][0] & h[0][0])
-      E.add_constraint(m[1][0] & h[0][0] & m[0][1] & h[1][1])
-      E.add_constraint(m[1][1] & h[0][1] & m[0][0] & h[1][0])
+      # These constraints ensure that the system is in a safe state
+      E.add_constraint(~m[0][0] | ~h[1][0] | ~m[1][1] | ~h[0][1])
+      E.add_constraint(~m[0][1] | ~h[1][1] | ~m[1][0] | ~h[0][0])
+
     return E
-
-# this generates a list of cycles
-# where a cycle is a list of processes
-# todo: don't allow duplicates
-def generate_cycle_list_up_to_length(length, starting_process):
-  cycle_list_to_one_less = [[p] for p in range(num_processes) if p is not starting_process]
-  res = [] # note that cycle lists of length 1 are excluded
-  for n in range(length):
-    cycle_list = []
-    for c in cycle_list_to_one_less:
-      for i in (x for x in range(num_processes) if x not in c and x is not starting_process):
-        cycle_list.append(c + [i])
-    cycle_list_to_one_less = cycle_list
-    res += cycle_list
-  return res
-print('cycles 2 starting with 0:', generate_cycle_list_up_to_length(2, 0))
-
-# todo: don't allow duplicates
-def generate_lists_of_resources(length, j):
-  if length == 1:
-    return [[j]]
-  prev_list = generate_lists_of_resources(length - 1, j)
-  res = []
-  for l in prev_list:
-    for r in (x for x in range(num_resources) if x not in l):
-      res.append(l + [r])
-  return res
-#print('lists of 2 resources begining with 0', generate_lists_of_resources(2, 0))
-
-class Cycle:
-  def __init__(self, list_of_processes, list_of_resources):
-    assert len(list_of_processes) == len(list_of_resources) + 1
-    self.processes = list_of_processes
-    self.resources = list_of_resources
-
-  def toConstraint(self):
-    constraint = h[self.processes[0]][self.resources[0]]
-    for i in range(1, len(self.processes)):
-      prev_proc = self.processes[i-1]
-      proc = self.processes[i]
-      res = self.resources[i-1]
-      constraint = constraint & w[prev_proc][res] & h[proc][res]
-    return constraint
-
-def cycle_list_to_constraints(cycle_list, j):
-  assert len(cycle_list) > 1
-  return [Cycle(cycle_list, resource_list).toConstraint() for resource_list in generate_lists_of_resources(len(cycle_list) - 1, j)] # todo make more efficient
-#print('constraint for [0, 1, 0]', cycle_list_to_constraints([0, 1, 0]))
-
-def generate_circular_wait_constraints():
-  constraints = []
-  for i in range(num_processes):
-    for j in range(num_resources):
-      for c in helper(i, j):
-        constraints.append(~h[i][j] & m[i][j] & c)
-  return constraints
-
-def helper(i, j):
-  constraints = []
-  for cycle_list in generate_cycle_list_up_to_length(num_processes, i):
-    constraints += cycle_list_to_constraints(cycle_list, j)
-  return constraints
 
 if __name__ == "__main__":
 
