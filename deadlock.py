@@ -26,7 +26,7 @@ def example_theory():
     
     # holding is exclusive
     for j in range(num_resources):
-      constraint = T
+      constraint = F
       for i in range(num_processes):
         constraint = constraint | ~h[i][j]
       print('holding is exclusive', constraint)
