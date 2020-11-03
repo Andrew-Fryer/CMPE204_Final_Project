@@ -66,6 +66,11 @@ def example_theory():
 #      E.add_constraint(c)
 #      print('circular', c)
 
+      # hard code 2 processes and 2 resources for now:
+      E.add_constraint(m[0][0] & h[1][0] & m[1][1] & h[0][1)
+      E.add_constraint(m[0][1] & h[1][1] & m[1][0] & h[0][0])
+      E.add_constraint(m[1][0] & h[0][0] & m[0][1] & h[1][1])
+      E.add_constraint(m[1][1] & h[0][1] & m[0][0] & h[1][0])
     return E
 
 # this generates a list of cycles
