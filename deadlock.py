@@ -82,7 +82,7 @@ def generate_cycle_list_up_to_length(length):
     cycle_list_to_one_less = cycle_list
     res += cycle_list
   return res
-#print('cycles 4:', generate_cycle_list_up_to_length(4))
+#print('cycles 2:', generate_cycle_list_up_to_length(2))
 
 # todo: don't allow duplicates
 def generate_lists_of_resources(length, j):
@@ -91,10 +91,10 @@ def generate_lists_of_resources(length, j):
   prev_list = generate_lists_of_resources(length - 1, j)
   res = []
   for l in prev_list:
-    for r in range(num_resources):
+    for r in (x for x in range(num_resources) if x not in l):
       res.append(l + [r])
   return res
-#print('lists of 4 resources', generate_lists_of_resources(4))
+#print('lists of 2 resources begining with 0', generate_lists_of_resources(2, 0))
 
 class Cycle:
   def __init__(self, list_of_processes, list_of_resources):
