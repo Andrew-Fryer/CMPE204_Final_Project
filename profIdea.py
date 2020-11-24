@@ -1,9 +1,21 @@
 from nnf import Var
 from lib204 import Encoding
+from nnf import NNF
+from nnf.operators import iff
+
+def implication(l, r):
+    return l.negate() | r
+
+def neg(f):
+    return f.negate()
+
+NNF.__rshift__ = implication
+NNF.__invert__ = neg
+# ^ this is a gift from Muise... thank-you!
 
 num_processors = 2
 num_processes = 3
-num_time_slots = 2 # adjust this and see if the formula is satisfiable
+num_time_slots = 3 # adjust this and see if the formula is satisfiable
 num_resources = 1
 
 # This class simply instantiates variables (in the __init__ method) and then provides a clean way to access them (using the get method)
@@ -91,16 +103,28 @@ def example_theory():
     for p1 in range(num_processes):
       for p2 in range(p1 + 1, num_processes):
         for resource in range(num_resources):
-          E.add_constraint(~r.get(p1, resource) | ~r.get(p2, resource))
+          for time in range(num_time_slots):
+            # Build a formula that is true iff p1 is using the resource at this time:
+            p1_running_at_this_time = F
+            for processor in range(num_processors):
+              p1_running_at_this_time = p1_running_at_this_time | s.get(time, processor, p1)
+            p1_using_resource = r.get(p1, resource) & p1_running_at_this_time
+            # Build a formula that is true iff p2 is using the resource at this time:
+            p2_running_at_this_time = F
+            for processor in range(num_processors):
+              p2_running_at_this_time = p2_running_at_this_time | s.get(time, processor, p2)
+            p2_using_resource = r.get(p2, resource) & p2_running_at_this_time
+
+            E.add_constraint(~p1_using_resource | ~p2_using_resource)
 
     # Finally, we can add constraints to tell the system which processes use which resources:
     # For example:
     # process 0 uses resource:
     E.add_constraint(r.get(0, 0))
     # process 1 also uses resource
-    E.add_constraint(r.get(0, 0))
+    E.add_constraint(r.get(1, 0))
     # process 2 also uses resource
-    E.add_constraint(r.get(0, 0))
+    E.add_constraint(r.get(2, 0))
     # (So, processes 0, 1, and 2, cannot be run concurrently)
     return E
 
