@@ -9,6 +9,9 @@ def implication(l, r):
 def neg(f):
     return f.negate()
 
+def split(word): 
+    return [char for char in word] 
+
 NNF.__rshift__ = implication
 NNF.__invert__ = neg
 # ^ this is a gift from Muise... thank-you!
@@ -25,6 +28,25 @@ code_blocks_for_processes= [3, 3, 3]
 #ie proc 2 has 3 code blocks
 #so in this case we have three block per process, but this will not 
 #always be the case, can be adapted to match different process requirements
+
+
+#in the order of proc 0 cb 0, proc 0, cb 1 and so on
+    #numbers indicate which resources they will be using
+    #x indicates no resource use
+    #order does not matter, just has to be spaced
+cb_resc_use_array = [
+    "0 1 2" ,  #proc 0 cb 0 uses r0, r1, r2 
+    "x",       #proc 0 cb 1 uses no resources
+    "0",       #proc 0 cb 2 uses r0
+
+    "1",       #proc 1 cb 0 uses r1
+    "2 1",     #proc 1 cb 1 uses r2, r1
+    "x",       #proc 1 cb 2 uses no resources
+
+    "1 2",     #proc 2 cb 0 uses r1, r2
+    "0 1",     #proc 2 cb 1 uses r0, r1
+    "1 0 2"    #proc 2 cb 2 uses r0, r1, r2
+    ]
 
 
 #num of time slots will have to be adjusted to match the maximum case, ie all code blocks on one processor
@@ -92,6 +114,44 @@ def example_theory():
     # Let's make sure that T is always true and F is always false :)
     E.add_constraint(T)
     E.add_constraint(~F)
+
+
+    #set up resource propositions
+    #use these to set up the constraints
+    arr_index = 0
+    for process in range(num_processes):
+      num_code_blocks = code_blocks_for_processes[process]
+      for code_block in range(num_code_blocks):
+
+        is_cb_using_resc = []
+        for resource in range(num_resources):
+          is_cb_using_resc.append(0)
+
+        #now we use the cb_resc_use_array to set appropriate values to true
+        used_rescs = cb_resc_use_array[arr_index].split()
+        #split will split by spaces
+        #used rescs will be an array of resources being used by the code block
+        for used_resc in used_rescs:
+          if used_resc != "x":
+            usedresc_index = int(used_resc)
+            #since int can use directly in code
+            is_cb_using_resc[usedresc_index] = 1
+            #ie resources that are used set to true, resources that are not used will remain false
+            #1 is true, 0 is false
+
+        #finally implement constraints using the array
+        for resource in range(num_resources):
+          is_used = is_cb_using_resc[resource]
+          cur_rec_prop = r.get(process, code_block, resource)
+          if is_used == 1:
+            #then add truth constraint for that resource
+            E.add_constraint(cur_rec_prop)
+          else:
+            #so it is false constraint so add it
+            E.add_constraint(~cur_rec_prop)
+
+        #now increment the array index for the next code block
+        arr_index = arr_index +1
 
     #adapting so that each process code block needs to run at least once
     for process in range(num_processes):
@@ -240,20 +300,6 @@ def example_theory():
         #if c0_at_t1 is true, then later code blocks 1ton cannot be on t0 to t1
         E.add_constraint(~c0_at_t1 | later_blocks_not_on_earlier_slots)
 
-
-
-    # Finally, we can add constraints to tell the system which processes use which resources:
-    # For example:
-    #each process has 3 code blocks, multiple ways we can use resources
-    #this is editable by us
-    #proc 0, cb0 uses r0
-    E.add_constraint(r.get(0,0,0))
-
-    #proc 1, cb1, uses r0
-    E.add_constraint(r.get(1,1,0))
-
-    #proc 2, cb2 uses r0
-    E.add_constraint(r.get(2,2,0))
     return E
 
 if __name__ == "__main__":
