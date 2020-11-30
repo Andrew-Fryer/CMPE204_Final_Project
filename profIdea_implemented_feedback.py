@@ -65,9 +65,6 @@ class Process_requirements:
 
     #will be handling resource allocation
     #each block has a proposition for the resources they are using.
-    for process in range(num_processes):
-      for resource in range(num_resources):
-        self.table[process, resource] = Var('req_' + str(process) + '_' + str(resource))
 
     for process in range(num_processes):
       #retrieve number of code blocks for given process
@@ -76,7 +73,6 @@ class Process_requirements:
         #now define the resource proposition choices for a given code block
         for resource in range(num_resources):
           self.table[process, code_block, resource] = Var('req_' + str(process) + '_' + str(code_block)+ '_' + str(resource))
-
 
   def get(self, process, code_block, resource):
     return self.table[process, code_block, resource]
@@ -154,7 +150,7 @@ def example_theory():
                   E.add_constraint(~s.get(time, processor, p1, c1) | ~s.get(time, processor, p2, c2))
 
 
-    # Let's add constraints so that no 2 process code blocks can run at the same time on the same processor:
+    # Let's add constraints so that no 2 process code blocks can use the same resource at the same time step:
     for p1 in range(num_processes):
       #two code blocks cannot run at the same time on the same processor, 
       #so for a given code block 
@@ -213,14 +209,13 @@ def example_theory():
                   ealier_blocks_not_on_later_slots = ealier_blocks_not_on_later_slots & neg(s.get(t2, processor2, process, c_prev))
                   #if c1_t1 is true, then the rest of the ealier code blocks (c0 to c1-1) should not be 
                   #in any later time block (t1+1 to tn) in any processor, they must run either sequentially
-
-
-
           #now add the constraint in the case
           c1_at_t1 = s.get(t1, processor, process, c1);
           #p->q ie ~p | q
           #if c1_at_t1 is true, then all other ealier code blocks on later time steps in any processor should be false
           E.add_constraint(~c1_at_t1 | ealier_blocks_not_on_later_slots)
+
+
 
     #if block k is on time step t, then blocks k+1 to n cannot be on timestep 0 to timestep t
     #this is in part covered by the previous constraint however it does not cover the case for code block 0
