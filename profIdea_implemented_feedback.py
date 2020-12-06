@@ -48,10 +48,10 @@ NNF.__invert__ = neg
 
 num_processors = 2
 num_processes = 3
-num_resources = 1
+num_resources = 2
 
 
-code_blocks_for_processes= [1, 2, 1]
+code_blocks_for_processes= [2, 2, 1]
 #index of element corresponds to number of code blocks for the process
 #ie proc 0 has 3 code blocks
 #ie proc 1 has 3 code blocks
@@ -61,19 +61,19 @@ code_blocks_for_processes= [1, 2, 1]
 
 
 #in the order of proc 0 cb 0, proc 0, cb 1 and so on
-    #numbers indicate which resources they will be using
+    #numbers indicate the index of resources they will be using
     #x indicates no resource use
-    #order does not matter, just has to be spaced
+    #for resource listing: order does not matter, just has to be spaced
 cb_resc_use_array = [
-    "x" ,  #proc 0 cb 0 uses r0, r1, r2 
-   # "x",       #proc 0 cb 1 uses no resources
+    "1" ,  #proc 0 cb 0 uses r0, r1, r2 
+    "0",       #proc 0 cb 1 uses no resources
     #"0",       #proc 0 cb 2 uses r0
 
-    "x",       #proc 1 cb 0 uses r0
+    "0",       #proc 1 cb 0 uses r0
     "0",     #proc 1 cb 1 uses  r0
     #"x",       #proc 1 cb 2 uses no resources
 
-    "0",     #proc 2 cb 0 uses r1, r2
+    "1",     #proc 2 cb 0 uses r1, r2
     #"0",     #proc 2 cb 1 uses r0, r1
     #"0"    #proc 2 cb 2 uses r0, r1, r2
     ]
@@ -390,7 +390,7 @@ if __name__ == "__main__":
         # a do able value
 
       print("Estimated Optimum Solution Has Maximum Slot of "+str(maxSlot))
-      print("solution:")
+      print("Proposition Truth Values:")
       solution = final_solution;
 
       #put the solution in schedule form
