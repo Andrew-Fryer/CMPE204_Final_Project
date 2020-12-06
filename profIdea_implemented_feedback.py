@@ -70,7 +70,7 @@ cb_resc_use_array = [
     #"0",       #proc 0 cb 2 uses r0
 
     "0",       #proc 1 cb 0 uses r0
-    "0",     #proc 1 cb 1 uses  r0
+    "x",     #proc 1 cb 1 uses  r0
     #"x",       #proc 1 cb 2 uses no resources
 
     "1",     #proc 2 cb 0 uses r1, r2
@@ -389,7 +389,7 @@ if __name__ == "__main__":
         #while loop will always be satisfied since optimum max slot will eventually be incremented to 
         # a do able value
 
-      print("Estimated Optimum Solution Has Maximum Slot of "+str(maxSlot))
+      print("Estimated Optimum Solution Highest Slot Index: "+str(maxSlot-1))
       print("Proposition Truth Values:")
       solution = final_solution;
 
@@ -422,6 +422,33 @@ if __name__ == "__main__":
               if var_solution == True:
                 #if it is true then put a value for the corresponding timeslot on the corresponding processor
                 processor_array[time] = "p"+str(process)+"_cb"+str(code_block)
+
+      #print resouce usage statistics
+      print()
+      print("Resource Usage Statistics:")
+      arr_index = 0
+      for process in range(num_processes):
+        print("-------------")
+        num_code_blocks = code_blocks_for_processes[process]
+        for code_block in range(num_code_blocks):
+          prompt="p"+str(process)+"_cb"+str(code_block)+" uses: "
+          is_cb_using_resc = []
+          for resource in range(num_resources):
+            is_cb_using_resc.append(0)
+
+          #now we use the cb_resc_use_array to set appropriate values to true
+          used_rescs = cb_resc_use_array[arr_index].split()
+          #split will split by spaces
+          #used rescs will be an array of resources being used by the code block
+          for used_resc in used_rescs:
+            if used_resc != "x":
+              prompt = prompt+"r"+used_resc+", "
+            else:
+              prompt = prompt+"no resources"
+
+          #now increment the array index for the next code block
+          print(prompt)
+          arr_index = arr_index +1
 
       #now print schedule to console or ouptut
       print()
