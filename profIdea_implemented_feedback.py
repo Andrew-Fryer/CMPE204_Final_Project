@@ -12,6 +12,35 @@ def neg(f):
 def split(word): 
     return [char for char in word] 
 
+def getMaxSlot(solution):
+  #need to find the maximum slot, first create reverse array
+  reverse_slots=[]
+  for timeslot in reversed(range(num_time_slots)):
+    reverse_slots.append(timeslot)
+
+  maxslotFound = False
+  for timeslot in reverse_slots:
+    for processor in range(num_processors):
+      for process in range(num_processes):
+        num_code_blocks = code_blocks_for_processes[process]
+        for code_block in range(num_code_blocks):
+          var_name = 'schedule_' + str(timeslot) + '_' + str(processor) + '_' + str(process) + '_' + str(code_block);
+          var_solution = solution[var_name]
+          if var_solution:
+            maxslotFound = True
+            break
+
+        if maxslotFound:
+          break
+
+      if maxslotFound:
+        break
+
+    if maxslotFound:
+      break
+
+  return timeslot
+
 NNF.__rshift__ = implication
 NNF.__invert__ = neg
 # ^ this is a gift from Muise... thank-you!
@@ -21,7 +50,7 @@ num_processes = 3
 num_resources = 1
 
 
-code_blocks_for_processes= [1, 1, 1]
+code_blocks_for_processes= [1, 2, 1]
 #index of element corresponds to number of code blocks for the process
 #ie proc 0 has 3 code blocks
 #ie proc 1 has 3 code blocks
@@ -35,12 +64,12 @@ code_blocks_for_processes= [1, 1, 1]
     #x indicates no resource use
     #order does not matter, just has to be spaced
 cb_resc_use_array = [
-    "0" ,  #proc 0 cb 0 uses r0, r1, r2 
+    "x" ,  #proc 0 cb 0 uses r0, r1, r2 
    # "x",       #proc 0 cb 1 uses no resources
     #"0",       #proc 0 cb 2 uses r0
 
-    "0",       #proc 1 cb 0 uses r1
-    #"0",     #proc 1 cb 1 uses r2, r1
+    "x",       #proc 1 cb 0 uses r0
+    "0",     #proc 1 cb 1 uses  r0
     #"x",       #proc 1 cb 2 uses no resources
 
     "0",     #proc 2 cb 0 uses r1, r2
@@ -256,6 +285,9 @@ def example_theory():
     for process in range(num_processes):
       num_code_blocks = code_blocks_for_processes[process]
       for c1 in range(num_code_blocks):
+        #prompt = "\n\nFor PROCESS "+str(process)+"; CODE BLOCK "+str(c1)+":"
+        #print(prompt)
+        #prompt = "If p"+str(process)+"_cb"+str(c1)" is true, then:"
         #suppose we are dealing with code block k
         #other code blocks 1 to k should be behind it in time steps
         #irrespective of what processor it is
@@ -263,21 +295,31 @@ def example_theory():
         #then code blocks 0 to k-1 cannot be true for timesteps t to n
         # t is included because, if k is running on timestep t
         for t1 in range(num_time_slots):
-          for processor in range(num_processors):
-            #t1 is the timeslot that c1 is in
-            #so bring back other code blocks below it
-            ealier_blocks_not_on_later_slots = T;
-            for c_prev in range(0,c1):
-              for t2 in range(t1, num_time_slots):
-                for processor2 in range(num_processors):
-                  ealier_blocks_not_on_later_slots = ealier_blocks_not_on_later_slots & neg(s.get(t2, processor2, process, c_prev))
-                  #if c1_t1 is true, then the rest of the ealier code blocks (c0 to c1-1) should not be 
-                  #in any later time block (t1+1 to tn) in any processor, they must run either sequentially
+          c1_at_t1 = T;
+          #prompt = "\nIf cb"+str(c1)+" at timestep "+str(t1)+" is true, then:"
+          #print(prompt)
+          #t1 is the timeslot that c1 is in
+          #so bring back other code blocks below it
+          ealier_blocks_not_on_later_slots = T;
+          for c_prev in range(0,c1):
+            for t2 in range(t1, num_time_slots):
+              for processor2 in range(num_processors):
+                #prompt = "Then cb"+str(c_prev)+" at timestep "+str(t2)+" on processor "+str#(processor2)+" should be false"
+                #print(prompt)
+                #prompt = "Current value for above:"
+                #print(prompt)
+                #print(s.get(t2, processor2, process, c_prev))
+                ealier_blocks_not_on_later_slots = ealier_blocks_not_on_later_slots & neg(s.get(t2, processor2, process, c_prev))
+                #if c1_t1 is true, then the rest of the ealier code blocks (c0 to c1-1) should not be 
+                #in any later time block (t1+1 to tn) in any processor, they must run either sequentially 
           #now add the constraint in the case
-          c1_at_t1 = s.get(t1, processor, process, c1);
+          c1_at_t1 = F
+          for processor in range(num_processors):
+            c1_at_t1 = c1_at_t1 | s.get(t1, processor, process, c1);
           #p->q ie ~p | q
           #if c1_at_t1 is true, then all other ealier code blocks on later time steps in any processor should be false
           E.add_constraint(~c1_at_t1 | ealier_blocks_not_on_later_slots)
+          #end t1 num_time_slots loop
 
 
 
@@ -290,18 +332,19 @@ def example_theory():
       num_code_blocks = code_blocks_for_processes[process]
       
       for t1 in range(num_time_slots):
+        #for processor in range(num_processors):
+        #t1 is the time slot c0 is in 
+        later_blocks_not_on_earlier_slots = T
+        for cb_ahead in range(1,num_code_blocks):
+          #cannot be in time step less than or equal to t
+          for t2 in range(0,t1):
+            #t2 is timesteps less than or equal to t
+            for processor2 in range(num_processors):
+              later_blocks_not_on_earlier_slots = later_blocks_not_on_earlier_slots & neg(s.get(t2,processor2,process,cb_ahead))
+              #so they cannot be in timesteps before time step block 0 is in so those schedule propositions must be false
+        c0_at_t1= F     
         for processor in range(num_processors):
-          #t1 is the time slot c0 is in 
-          later_blocks_not_on_earlier_slots = T
-          for cb_ahead in range(1,num_code_blocks):
-            #cannot be in time step less than or equal to t
-            for t2 in range(0,t1):
-              #t2 is timesteps less than or equal to t
-              for processor2 in range(num_processors):
-                cur_Value = s.get(t2,processor2,process,cb_ahead)
-                later_blocks_not_on_earlier_slots = later_blocks_not_on_earlier_slots & ~cur_Value
-                #so they cannot be in timesteps before time step block 0 is in so those schedule propositions must be false
-        c0_at_t1 = s.get(t1,processor,process,c1)
+          c0_at_t1 = c0_at_t1 | s.get(t1,processor,process,c0)
         #if c0_at_t1 is true, then later code blocks 1ton cannot be on t0 to t1
         E.add_constraint(~c0_at_t1 | later_blocks_not_on_earlier_slots)
 
@@ -312,14 +355,52 @@ if __name__ == "__main__":
     T = example_theory()
 
     print("\nSatisfiable: %s" % T.is_satisfiable())
-    #print("# Solutions: %d" % T.count_solutions())
-    print("solution:")
-    solution = T.solve()
-    for time in range(num_time_slots):
-      for processor in range(num_processors):
-        for process in range(num_processes):
-          num_code_blocks = code_blocks_for_processes[process]
-          for code_block in range(num_code_blocks):
-            var_name = 'schedule_' + str(time) + '_' + str(processor) + '_' + str(process) + '_' + str(code_block)
-            print(var_name, solution[var_name])
-    #print("   Solution: %s" % T.solve())
+    if T.is_satisfiable:
+      print("Attempting to find optimum solution.....");
+      #print("# Solutions: %d" % T.count_solutions())
+      
+      #find optimum by performing trial and error
+      #assume optimum is where tasks are split equally across processors,
+      #so maximum slot should be total time slot divided by the number of processors
+
+      optimumMaxSlot =(int) (num_time_slots / num_processors);
+      solutionFound = False
+      final_solution = []
+      while solutionFound == False:
+        #print("Attempting Optimum Maximum Slots: "+str(optimumMaxSlot))
+        for i in range(0,100):
+          #for a given minimum time slot, try 100 different solutions 
+          solution= T.solve()
+          #for a given solution get maxslot
+          maxSlot = getMaxSlot(solution)+1
+          if maxSlot <= optimumMaxSlot:
+            #if the number of max slots for this solution is less than or equal to our guessed
+            #minimum then we have found a somewhat optimum solution so 
+            solutionFound = True;
+            final_solution = solution;
+            break
+          #otherwise continue iterating
+
+        #if no solution is found for that minimum, then increment our optimum slots by 1 and try again
+        if solutionFound == False:
+          optimumMaxSlot += 1;
+
+        #while loop will always be satisfied since optimum max slot will eventually be incremented to 
+        # a do able value
+
+      print("Estimated Optimum Solution Has Maximum Slot of "+str(maxSlot))
+      print("solution:")
+      solution = final_solution;
+      for time in range(num_time_slots):
+        for processor in range(num_processors):
+          for process in range(num_processes):
+            num_code_blocks = code_blocks_for_processes[process]
+            for code_block in range(num_code_blocks):
+              var_name = 'schedule_' + str(time) + '_' + str(processor) + '_' + str(process) + '_' + str(code_block)
+              print(var_name+": "+str(solution[var_name]))
+      #print("   Solution: %s" % T.solve())
+
+    else:
+      print("no valid solution")
+
+    
