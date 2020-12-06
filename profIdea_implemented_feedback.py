@@ -21,7 +21,7 @@ num_processes = 3
 num_resources = 1
 
 
-code_blocks_for_processes= [3, 3, 3]
+code_blocks_for_processes= [1, 1, 1]
 #index of element corresponds to number of code blocks for the process
 #ie proc 0 has 3 code blocks
 #ie proc 1 has 3 code blocks
@@ -35,24 +35,24 @@ code_blocks_for_processes= [3, 3, 3]
     #x indicates no resource use
     #order does not matter, just has to be spaced
 cb_resc_use_array = [
-    "0 1 2" ,  #proc 0 cb 0 uses r0, r1, r2 
-    "x",       #proc 0 cb 1 uses no resources
-    "0",       #proc 0 cb 2 uses r0
+    "0" ,  #proc 0 cb 0 uses r0, r1, r2 
+   # "x",       #proc 0 cb 1 uses no resources
+    #"0",       #proc 0 cb 2 uses r0
 
-    "1",       #proc 1 cb 0 uses r1
-    "2 1",     #proc 1 cb 1 uses r2, r1
-    "x",       #proc 1 cb 2 uses no resources
+    "0",       #proc 1 cb 0 uses r1
+    #"0",     #proc 1 cb 1 uses r2, r1
+    #"x",       #proc 1 cb 2 uses no resources
 
-    "1 2",     #proc 2 cb 0 uses r1, r2
-    "0 1",     #proc 2 cb 1 uses r0, r1
-    "1 0 2"    #proc 2 cb 2 uses r0, r1, r2
+    "0",     #proc 2 cb 0 uses r1, r2
+    #"0",     #proc 2 cb 1 uses r0, r1
+    #"0"    #proc 2 cb 2 uses r0, r1, r2
     ]
 
 
 #num of time slots will have to be adjusted to match the maximum case, ie all code blocks on one processor
 #therefore num of time slots will be the total number of code blocks we have in the system
 num_time_slots = 0 # adjust this and see if the formula is satisfiable
-for i in blocks_per_process:
+for i in code_blocks_for_processes:
   num_time_slots = num_time_slots + i
   #complete the cumulative sum
 
@@ -135,6 +135,8 @@ def example_theory():
           if used_resc != "x":
             usedresc_index = int(used_resc)
             #since int can use directly in code
+            # print(used_rescs)
+            # print("For process "+str(process)+", code block "+str(code_block)+", resource:"+str(used_resc))
             is_cb_using_resc[usedresc_index] = 1
             #ie resources that are used set to true, resources that are not used will remain false
             #1 is true, 0 is false
@@ -203,6 +205,7 @@ def example_theory():
             #need to eliminate the case where we compare c1 to itself
             if p1 == p2 and c1 == c2:
               #we are with the same code block of the same process so do not add constraint
+              0
             else:
               #do the constrain addition
               for time in range(num_time_slots):
@@ -225,6 +228,7 @@ def example_theory():
             #need to eliminate the case where we compare c1 to itself
             if p1 == p2 and c1 == c2:
               #we are with the same code block of the same process so do not add constraint
+              0;
             else:
               #do the constrain addition
               for resource in range(num_resources):
@@ -294,7 +298,8 @@ def example_theory():
             for t2 in range(0,t1):
               #t2 is timesteps less than or equal to t
               for processor2 in range(num_processors):
-                later_blocks_not_on_earlier_slots = later_blocks_not_on_earlier_slots & neg(s.get(t2,processor2,process,cb_ahead))
+                cur_Value = s.get(t2,processor2,process,cb_ahead)
+                later_blocks_not_on_earlier_slots = later_blocks_not_on_earlier_slots & ~cur_Value
                 #so they cannot be in timesteps before time step block 0 is in so those schedule propositions must be false
         c0_at_t1 = s.get(t1,processor,process,c1)
         #if c0_at_t1 is true, then later code blocks 1ton cannot be on t0 to t1
@@ -313,6 +318,7 @@ if __name__ == "__main__":
     for time in range(num_time_slots):
       for processor in range(num_processors):
         for process in range(num_processes):
+          num_code_blocks = code_blocks_for_processes[process]
           for code_block in range(num_code_blocks):
             var_name = 'schedule_' + str(time) + '_' + str(processor) + '_' + str(process) + '_' + str(code_block)
             print(var_name, solution[var_name])
