@@ -3,6 +3,7 @@ from lib204 import Encoding
 from nnf import NNF
 from nnf.operators import iff
 import math
+import time
 
 def implication(l, r):
     return l.negate() | r
@@ -46,12 +47,12 @@ NNF.__rshift__ = implication
 NNF.__invert__ = neg
 # ^ this is a gift from Muise... thank-you!
 
-num_processors = 2
-num_processes = 3
-num_resources = 2
+num_processors = 3
+num_processes = 4
+num_resources = 3
 
 
-code_blocks_for_processes= [2, 2, 1]
+code_blocks_for_processes= [3, 2, 2, 4]
 #index of element corresponds to number of code blocks for the process
 #ie proc 0 has 3 code blocks
 #ie proc 1 has 3 code blocks
@@ -65,19 +66,23 @@ code_blocks_for_processes= [2, 2, 1]
     #x indicates no resource use
     #for resource listing: order does not matter, just has to be spaced
 cb_resc_use_array = [
-    "1" ,  #proc 0 cb 0 uses r0, r1, r2 
+    "1 2" ,  #proc 0 cb 0 uses r0, r1, r2 
     "0",       #proc 0 cb 1 uses no resources
-    #"0",       #proc 0 cb 2 uses r0
+    "2",       #proc 0 cb 2 uses r0
 
-    "0",       #proc 1 cb 0 uses r0
+    "2 0",       #proc 1 cb 0 uses r0
     "x",     #proc 1 cb 1 uses  r0
     #"x",       #proc 1 cb 2 uses no resources
 
     "1",     #proc 2 cb 0 uses r1, r2
-    #"0",     #proc 2 cb 1 uses r0, r1
+    "1",     #proc 2 cb 1 uses r0, r1
     #"0"    #proc 2 cb 2 uses r0, r1, r2
-    ]
 
+    "0 1 2",     #proc 2 cb 0 uses r1, r2
+    "x",     #proc 2 cb 1 uses r0, r1
+    "0",    #proc 2 cb 2 uses r0, r1, r2
+    "1 0"    #proc 2 cb 2 uses r0, r1, r2
+    ]
 
 #num of time slots will have to be adjusted to match the maximum case, ie all code blocks on one processor
 #therefore num of time slots will be the total number of code blocks we have in the system
@@ -158,6 +163,7 @@ def example_theory():
           is_cb_using_resc.append(0)
 
         #now we use the cb_resc_use_array to set appropriate values to true
+        #print(str(arr_index))
         used_rescs = cb_resc_use_array[arr_index].split()
         #split will split by spaces
         #used rescs will be an array of resources being used by the code block
@@ -363,13 +369,19 @@ if __name__ == "__main__":
       #find optimum by performing trial and error
       #assume optimum is where tasks are split equally across processors,
       #so maximum slot should be total time slot divided by the number of processors
-
+      start = time.time()
+      T.solve()
+      end = time.time()
+      elapsed = end-start
+      trials = math.ceil(2.71828**(0-(elapsed-5)))
+      print("Estimated Number of Trials Per Step: "+str(trials))
+      
       optimumMaxSlot = math.ceil(num_time_slots / num_processors);
       solutionFound = False
       final_solution = []
       while solutionFound == False:
         #print("Attempting Optimum Maximum Slots: "+str(optimumMaxSlot))
-        for i in range(0,200):
+        for i in range(0,trials):
           #for a given minimum time slot, try 100 different solutions 
           solution= T.solve()
           #for a given solution get maxslot
@@ -408,20 +420,20 @@ if __name__ == "__main__":
         procrs_arrays.append(newarray)
         #add that to array of processor arrays
 
-      for time in range(num_time_slots):
+      for timeslot in range(num_time_slots):
         for processor in range(num_processors):
           processor_array = procrs_arrays[processor]
           for process in range(num_processes):
             num_code_blocks = code_blocks_for_processes[process]
             for code_block in range(num_code_blocks):
-              var_name = 'schedule_' + str(time) + '_' + str(processor) + '_' + str(process) + '_' + str(code_block)
+              var_name = 'schedule_' + str(timeslot) + '_' + str(processor) + '_' + str(process) + '_' + str(code_block)
               var_solution = solution[var_name]
               print(var_name+": "+str(var_solution))
 
               #now perform check to see where it should go
               if var_solution == True:
                 #if it is true then put a value for the corresponding timeslot on the corresponding processor
-                processor_array[time] = "p"+str(process)+"_cb"+str(code_block)
+                processor_array[timeslot] = "p"+str(process)+"_cb"+str(code_block)
 
       #print resouce usage statistics
       print()
