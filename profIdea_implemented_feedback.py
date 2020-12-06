@@ -2,6 +2,7 @@ from nnf import Var
 from lib204 import Encoding
 from nnf import NNF
 from nnf.operators import iff
+import math
 
 def implication(l, r):
     return l.negate() | r
@@ -363,12 +364,12 @@ if __name__ == "__main__":
       #assume optimum is where tasks are split equally across processors,
       #so maximum slot should be total time slot divided by the number of processors
 
-      optimumMaxSlot =(int) (num_time_slots / num_processors);
+      optimumMaxSlot = math.ceil(num_time_slots / num_processors);
       solutionFound = False
       final_solution = []
       while solutionFound == False:
         #print("Attempting Optimum Maximum Slots: "+str(optimumMaxSlot))
-        for i in range(0,100):
+        for i in range(0,200):
           #for a given minimum time slot, try 100 different solutions 
           solution= T.solve()
           #for a given solution get maxslot
@@ -391,15 +392,56 @@ if __name__ == "__main__":
       print("Estimated Optimum Solution Has Maximum Slot of "+str(maxSlot))
       print("solution:")
       solution = final_solution;
+
+      #put the solution in schedule form
+      procrs_arrays = []
+      timeslot_header = []
+      timeslot_header.append("Timeslots")
+      for t in range(num_time_slots):
+        timeslot_header.append("T"+str(t))
+
+      for i in range(num_processors):
+        newarray = []
+        for t in range(num_time_slots):
+          #create processor array with timeslot places
+          newarray.append("-")
+        procrs_arrays.append(newarray)
+        #add that to array of processor arrays
+
       for time in range(num_time_slots):
         for processor in range(num_processors):
+          processor_array = procrs_arrays[processor]
           for process in range(num_processes):
             num_code_blocks = code_blocks_for_processes[process]
             for code_block in range(num_code_blocks):
               var_name = 'schedule_' + str(time) + '_' + str(processor) + '_' + str(process) + '_' + str(code_block)
-              print(var_name+": "+str(solution[var_name]))
-      #print("   Solution: %s" % T.solve())
+              var_solution = solution[var_name]
+              print(var_name+": "+str(var_solution))
 
+              #now perform check to see where it should go
+              if var_solution == True:
+                #if it is true then put a value for the corresponding timeslot on the corresponding processor
+                processor_array[time] = "p"+str(process)+"_cb"+str(code_block)
+
+      #now print schedule to console or ouptut
+      print()
+      print("In Schedule Format:")
+      header_prompt = timeslot_header[0]+"\t"
+      for t in range(1,len(timeslot_header)):
+        header_prompt = header_prompt+timeslot_header[t]+"\t"
+      print(header_prompt)
+
+      for arr_index in range(len(procrs_arrays)):
+        proc_prompt = "P"+str(arr_index)+"\t"
+        procr_array = procrs_arrays[arr_index]
+
+        for value in procr_array:
+          proc_prompt = proc_prompt + value +"\t"
+
+        print(proc_prompt) 
+
+
+      #print("   Solution: %s" % T.solve())
     else:
       print("no valid solution")
 
