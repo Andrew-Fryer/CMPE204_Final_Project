@@ -135,16 +135,11 @@ s = Schedule() # a schedule
 r = Process_requirements() # and information about which processes use which resources
 
 # These are just for convienence below
-T = Var('T')
-F = Var('F')
+T = nnf.true
+F = nnf.false
 
 def example_theory():
     E = Encoding()
-
-    # Let's make sure that T is always true and F is always false :)
-    E.add_constraint(T)
-    E.add_constraint(~F)
-
 
     #set up resource propositions
     #use these to set up the constraints
