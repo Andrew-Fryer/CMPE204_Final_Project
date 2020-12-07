@@ -48,11 +48,11 @@ NNF.__invert__ = neg
 # ^ this is a gift from Muise... thank-you!
 
 num_processors = 3
-num_processes = 4
+num_processes = 3
 num_resources = 3
 
 
-code_blocks_for_processes= [3, 2, 2, 4]
+code_blocks_for_processes= [3, 2, 2]
 #index of element corresponds to number of code blocks for the process
 #ie proc 0 has 3 code blocks
 #ie proc 1 has 3 code blocks
@@ -78,10 +78,6 @@ cb_resc_use_array = [
     "1",     #proc 2 cb 1 uses r0, r1
     #"0"    #proc 2 cb 2 uses r0, r1, r2
 
-    "0 1 2",     #proc 2 cb 0 uses r1, r2
-    "x",     #proc 2 cb 1 uses r0, r1
-    "0",    #proc 2 cb 2 uses r0, r1, r2
-    "1 0"    #proc 2 cb 2 uses r0, r1, r2
     ]
 
 #num of time slots will have to be adjusted to match the maximum case, ie all code blocks on one processor
@@ -355,6 +351,61 @@ def example_theory():
         #if c0_at_t1 is true, then later code blocks 1ton cannot be on t0 to t1
         E.add_constraint(~c0_at_t1 | later_blocks_not_on_earlier_slots)
 
+    #constraint so that there is not a slot where all processors are idle in the middle of the schedule
+    for slot in range(1,num_time_slots):
+      prev_slot = slot-1
+      next_slot = slot+1
+
+      prev_slot_full = F
+      #for processor in reversed(range(num_processors)):
+      for processor in range(num_processors):
+        for process in range(num_processes):
+          num_code_blocks = code_blocks_for_processes[process]
+          for code_block in range(num_code_blocks):
+            prev_slot_full = prev_slot_full | s.get(prev_slot,processor,process, code_block)
+            #if the prev_slot has any value on any of the processors
+            #ie if there is a schedule proposition that is true for prev_slot
+      if next_slot != num_time_slots:
+        next_slot_full = F
+        #for processor in reversed(range(num_processors)):
+        for processor in range(num_processors):
+          for process in range(num_processes):
+            num_code_blocks = code_blocks_for_processes[process]
+            for code_block in range(num_code_blocks):
+              next_slot_full = next_slot_full | s.get(next_slot,processor,process, code_block)
+      else:
+        #it will be out of range of timeslots, so no need 
+        next_slot_full = F
+
+      #now create the proposition where middle cannot be empty
+      #ie schedule propositions for that slot cannot be false
+
+      slot_not_empty = F
+      #for processor in reversed(range(num_processors)):
+      for processor in range(num_processors):
+        for process in range(num_processes):
+          num_code_blocks = code_blocks_for_processes[process]
+          for code_block in range(num_code_blocks):
+            slot_not_empty = slot_not_empty | s.get(slot,processor,process, code_block)
+
+      #if prev slot has a value and next slot has a value
+      #then middle slot cannot be empty for all processors
+      prop = prev_slot_full & next_slot_full
+      E.add_constraint(~prop | slot_not_empty)
+
+    #add constraint that first slot cannot be empty
+    slot = 0
+    first_not_empty = F
+    #for processor in reversed(range(num_processors)):
+    for processor in range(num_processors):
+      for process in range(num_processes):
+        num_code_blocks = code_blocks_for_processes[process]
+        for code_block in range(num_code_blocks):
+          first_not_empty = first_not_empty | s.get(slot,processor,process, code_block)
+    E.add_constraint(first_not_empty);
+
+
+
     return E
 
 if __name__ == "__main__":
@@ -464,6 +515,7 @@ if __name__ == "__main__":
 
       #now print schedule to console or ouptut
       print()
+      print("Estimated Optimum Solution Highest Slot Index: "+str(maxSlot-1))
       print("In Schedule Format:")
       header_prompt = timeslot_header[0]+"\t"
       for t in range(1,len(timeslot_header)):
@@ -483,5 +535,3 @@ if __name__ == "__main__":
       #print("   Solution: %s" % T.solve())
     else:
       print("no valid solution")
-
-    
