@@ -1,4 +1,5 @@
-from nnf import Var
+import nnf
+Var = nnf.Var
 from lib204 import Encoding
 from nnf import NNF
 from nnf.operators import iff
