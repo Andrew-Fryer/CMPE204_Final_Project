@@ -513,7 +513,7 @@ if __name__ == "__main__":
       print()
       print("Estimated Optimum Solution Highest Slot Index: "+str(maxSlot-1))
       print("In Schedule Format:")
-      header_prompt = timeslot_header[0]+"\t"
+      header_prompt = "Time:\t"
       for t in range(1,len(timeslot_header)):
         header_prompt = header_prompt+timeslot_header[t]+"\t"
       print(header_prompt)
